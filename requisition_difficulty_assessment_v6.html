@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Requisition Difficulty Assessment</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#FFFFFF;--surface:#FFFFFF;--border:#DAD7D2;--text:#1a1714;--muted:#5B6770;
+    --primary:#DD0033;--navy:#004F71;
+    --standard:#00635B;--moderate:#E35205;--complex:#DD0033;
+    --standard-bg:#e6f5f4;--moderate-bg:#fdf0e6;--complex-bg:#fde8ec;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  }
+  body{font-family:var(--font);background:var(--bg);color:var(--text);padding:12px 12px}
+  .wrap{max-width:960px;margin:0 auto}
+  .page-header{margin-bottom:16px}
+  .eyebrow{font-size:16px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--primary);margin-bottom:6px;font-family:var(--font)}
+  .page-header h1{font-family:var(--font);font-size:24px;font-weight:600;line-height:1.2;color:var(--navy);margin-bottom:4px}
+  .page-header p{font-size:12px;color:var(--muted);font-family:var(--font)}
+
+  .score-bar{background:#f7f9fc;border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .score-num{font-family:var(--font);font-size:44px;font-weight:700;line-height:1;color:var(--text);min-width:64px;text-align:center}
+  .score-meta{flex:1;min-width:140px}
+  .score-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;font-family:var(--font)}
+  .score-range{font-size:11px;color:var(--muted);font-family:var(--font)}
+  .score-answered{font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--font)}
+  .prog-wrap{flex:1;min-width:160px;max-width:280px}
+  .prog-track{height:7px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:5px}
+  .prog-fill{height:100%;border-radius:4px;transition:width .4s cubic-bezier(.4,0,.2,1),background .4s;width:50%;background:var(--border)}
+  .prog-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:var(--font)}
+  .badge{padding:9px 22px;border-radius:8px;font-size:14px;font-weight:600;letter-spacing:.04em;transition:all .3s;white-space:nowrap;font-family:var(--font)}
+  .badge.standard{background:var(--standard-bg);color:var(--standard)}
+  .badge.moderate{background:var(--moderate-bg);color:var(--moderate)}
+  .badge.complex{background:var(--complex-bg);color:var(--complex)}
+  .badge.pending{background:var(--border);color:var(--muted)}
+
+  .guide{background:#f7f9fc;border:1px solid var(--border);border-radius:10px;padding:12px 18px;margin-bottom:16px;display:flex;gap:20px;flex-wrap:wrap;align-items:center}
+  .g-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text);font-family:var(--font)}
+  .g-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+  .layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;align-items:start}
+  @media(max-width:620px){.layout{grid-template-columns:1fr}}
+  .left-col{display:flex;flex-direction:column;gap:14px}
+
+  .pane{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .pane-header{padding:9px 14px;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#fff;font-family:var(--font)}
+  .pane-header.pos{background:var(--navy)}
+  .pane-header.neg{background:var(--standard)}
+  .pane-header .pip{background:rgba(255,255,255,.22);border-radius:4px;padding:2px 7px;font-size:10px;letter-spacing:.04em}
+
+  .q-row{display:grid;grid-template-columns:1fr auto 36px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border);gap:8px;transition:background .12s}
+  .q-row:last-child{border-bottom:none}
+  .q-row:hover{background:#faf8f5}
+  .q-row.a-pos{background:#fef4f5}
+  .q-row.a-neg{background:#eef8f6}
+  .q-row.a-no{background:#fafafa}
+  .q-text{font-size:12px;color:var(--text);line-height:1.4;font-family:var(--font)}
+  .tog{display:flex;gap:5px}
+  .tb{padding:4px 11px;border-radius:20px;border:1.5px solid var(--border);background:transparent;font-family:var(--font);font-size:11px;font-weight:500;cursor:pointer;color:var(--muted);transition:all .15s}
+  .tb:hover{border-color:#999;color:var(--text)}
+  .tb.yes.ap{background:var(--primary);border-color:var(--primary);color:#fff}
+  .tb.yes.an{background:var(--standard);border-color:var(--standard);color:#fff}
+  .tb.no.ac{background:var(--navy);border-color:var(--navy);color:#fff}
+  .pts{text-align:center;font-size:12px;font-weight:600;color:var(--muted);font-family:var(--font)}
+  .pts.pos{color:var(--primary)}
+  .pts.neg{color:var(--standard)}
+
+  .reset-btn{background:none;border:1.5px solid var(--border);border-radius:8px;padding:8px 20px;font-family:var(--font);font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;width:100%}
+  .reset-btn:hover{border-color:var(--primary);color:var(--primary)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="page-header">
+    <div class="eyebrow">Talent Acquisition</div>
+    <h1>Requisition Difficulty Assessment</h1>
+    <p>Answer each question below to calculate this requisition's difficulty level.</p>
+  </div>
+
+  <div class="score-bar">
+    <div class="score-num" id="score-display">—</div>
+    <div class="score-meta">
+      <div class="score-label">Raw Score</div>
+      <div class="score-range">Range: −6 to +9</div>
+      <div class="score-answered" id="answered-count">0 of 15 answered</div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+      <div class="prog-labels"><span>−6</span><span>0</span><span>+9</span></div>
+    </div>
+    <div class="badge pending" id="badge">Pending</div>
+  </div>
+
+  <div class="guide">
+    <div class="g-item"><div class="g-dot" style="background:#00635B"></div><span><strong>Standard</strong> — Score ≤ 0</span></div>
+    <div class="g-item"><div class="g-dot" style="background:#E35205"></div><span><strong>Moderate</strong> — Score 1–4</span></div>
+    <div class="g-item"><div class="g-dot" style="background:#DD0033"></div><span><strong>Complex</strong> — Score 5–9</span></div>
+  </div>
+
+  <div class="layout">
+    <div class="left-col">
+      <div class="pane">
+        <div class="pane-header pos">
+          <span>Complexity factors</span>
+          <span class="pip">+1 if yes</span>
+        </div>
+        <div id="general-pos-q"></div>
+      </div>
+      <div class="pane">
+        <div class="pane-header pos">
+          <span>Skills and talent pool</span>
+          <span class="pip">+1 if yes</span>
+        </div>
+        <div id="skills-q"></div>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="pane-header neg">
+        <span>Favorable factors</span>
+        <span class="pip">−1 if yes</span>
+      </div>
+      <div id="neg-q"></div>
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="resetAll()">↺ Reset all responses</button>
+</div>
+
+<script>
+const skillsSet=new Set([
+  "Does the role require hard-to-verify skills or credentials?",
+  "Is this role competing internally with other priority requisitions for similar talent?",
+  "Is there a specialized skill evaluation? (case study, field test, etc.)",
+  "Does the role require specialized or niche sourcing?",
+]);
+const posQ=[
+  "Is there a history of this role being difficult to fill?",
+  "Does the role require specialized or niche sourcing?",
+  "Are multiple stakeholders involved in the decision-making?",
+  "Would delay in filling this role cause major business impact?",
+  "Has the role been open longer than 6 months?",
+  "Has the role been open longer than 9 months?",
+  "Is the role for an executive office/family office?",
+  "Does the role require hard-to-verify skills or credentials?",
+  "Is this role competing internally with other priority requisitions for similar talent?",
+  "Is there a specialized skill evaluation? (case study, field test, etc.)",
+];
+const negQ=[
+  "Is this a pipeline role?",
+  "Is the talent pool plentiful and easy to source?",
+  "Are the role requirements clear and stable?",
+  "Do we have contractors that could fill in as we work on the requisition?",
+  "Is there a talent community for this role?",
+];
+const questions=[
+  ...posQ.map(t=>({text:t,yes:1,no:0,group:skillsSet.has(t)?'skills':'pos'})),
+  ...negQ.map(t=>({text:t,yes:-1,no:0,group:'neg'})),
+];
+let responses=new Array(questions.length).fill(null);
+
+function renderGroup(elId,gKey){
+  const c=document.getElementById(elId);c.innerHTML='';
+  questions.forEach((q,i)=>{
+    if(q.group!==gKey)return;
+    const ans=responses[i];
+    const pts=ans===null?'—':ans==='yes'?q.yes:q.no;
+    const ptsClass=pts==='—'?'':pts>0?'pos':pts<0?'neg':'';
+    const rowClass=ans===null?'':ans==='yes'?(q.yes>0?'a-pos':'a-neg'):'a-no';
+    const yAC=ans==='yes'?(q.yes>0?'ap':'an'):'';
+    const nAC=ans==='no'?'ac':'';
+    const row=document.createElement('div');
+    row.className='q-row '+rowClass;
+    row.innerHTML=`<div class="q-text">${q.text}</div>
+      <div class="tog">
+        <button class="tb yes ${yAC}" onclick="answer(${i},'yes')">Yes</button>
+        <button class="tb no ${nAC}" onclick="answer(${i},'no')">No</button>
+      </div>
+      <div class="pts ${ptsClass}">${pts===0?'0':pts}</div>`;
+    c.appendChild(row);
+  });
+}
+
+function render(){
+  renderGroup('general-pos-q','pos');
+  renderGroup('skills-q','skills');
+  renderGroup('neg-q','neg');
+  updateSummary();
+}
+
+function answer(i,val){
+  responses[i]=responses[i]===val?null:val;
+  render();
+}
+
+function updateSummary(){
+  const answered=responses.filter(r=>r!==null).length;
+  const score=responses.reduce((s,r,i)=>{
+    if(r===null)return s;
+    return s+(r==='yes'?questions[i].yes:questions[i].no);
+  },0);
+  const sEl=document.getElementById('score-display');
+  const bEl=document.getElementById('badge');
+  const fEl=document.getElementById('prog-fill');
+  const cEl=document.getElementById('answered-count');
+  cEl.textContent=`${answered} of ${questions.length} answered`;
+  if(!answered){
+    sEl.textContent='—';bEl.textContent='Pending';bEl.className='badge pending';
+    fEl.style.width='50%';fEl.style.background='var(--border)';return;
+  }
+  sEl.textContent=score>0?`+${score}`:score;
+  const pct=((score+6)/15)*100;
+  fEl.style.width=Math.max(2,Math.min(100,pct))+'%';
+  if(score<=0){bEl.className='badge standard';bEl.textContent='Standard';fEl.style.background='var(--standard)';}
+  else if(score<=4){bEl.className='badge moderate';bEl.textContent='Moderate';fEl.style.background='var(--moderate)';}
+  else{bEl.className='badge complex';bEl.textContent='Complex';fEl.style.background='var(--complex)';}
+}
+
+function resetAll(){responses=new Array(questions.length).fill(null);render();}
+render();
+</script>
+</body>
+</html>
