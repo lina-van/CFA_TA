@@ -22,8 +22,8 @@
 
   .score-bar{background:#f7f9fc;border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
   .score-meta{flex:1;min-width:140px}
-  .score-label{font-size:18px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
-  .score-answered{font-size:18px;color:var(--muted);margin-top:4px}
+  .score-label{font-size:16px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .score-answered{font-size:16px;color:var(--muted);margin-top:4px}
   .badge{padding:9px 22px;border-radius:8px;font-size:18px;font-weight:600;letter-spacing:.04em;transition:all .3s;white-space:nowrap}
   .badge.standard{background:var(--standard-bg);color:var(--standard)}
   .badge.moderate{background:var(--moderate-bg);color:var(--moderate)}
@@ -31,7 +31,7 @@
   .badge.pending{background:var(--border);color:var(--muted)}
 
   .layout{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;align-items:start}
-  @media(max-width:800px){.layout{grid-template-columns:1fr}}
+  @media(max-width:700px){.layout{grid-template-columns:1fr}}
   .left-col{display:flex;flex-direction:column;gap:14px}
 
   .pane{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
@@ -45,7 +45,7 @@
   .q-row.a-pos{background:#fef4f5}
   .q-row.a-neg{background:#eef8f6}
   .q-row.a-no{background:#fafafa}
-  .q-text{font-size:18px;color:var(--text);line-height:1.4}
+  .q-text{font-size:16px;color:var(--text);line-height:1.2}
   .tog{display:flex;gap:5px}
   .tb{padding:4px 11px;border-radius:20px;border:1.5px solid var(--border);background:transparent;font-family:var(--font);font-size:18px;font-weight:500;cursor:pointer;color:var(--muted);transition:all .15s}
   .tb:hover{border-color:#999;color:var(--text)}
@@ -63,7 +63,6 @@
 <body>
 <div class="wrap">
   <div class="page-header">
-    <div class="eyebrow">Talent Acquisition</div>
     <h1>Requisition Complexity Assessment</h1>
     <p>Answer each question below to calculate this requisition's complexity level.</p>
   </div>
